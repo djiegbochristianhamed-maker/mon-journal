@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>Journal — Mon agenda</title>
+<meta name="theme-color" content="#F5F0E4">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #F5F0E4;
+    --paper-2: #EDE6D3;
+    --line: #DDD3B8;
+    --ink: #22281F;
+    --ink-dim: #6B6A5A;
+    --white: #FFFFFF;
+    --forest: #33533A;
+    --forest-dark: #223B29;
+    --forest-light: #7A9B7D;
+    --amber: #C77D34;
+    --amber-bg: #FBEEDD;
+    --red: #B5493A;
+    --red-bg: #FBEAE6;
+    --shadow: 0 2px 10px rgba(34,40,31,0.06);
+    --shadow-lg: 0 12px 32px rgba(34,40,31,0.14);
+    --radius: 14px;
+    --ease: cubic-bezier(.22,.61,.36,1);
+  }
+  *{ box-sizing: border-box; margin:0; padding:0; -webkit-tap-highlight-color: transparent; }
+  html,body{ height:100%; overscroll-behavior-y: none; }
+  body{
+    font-family:'Inter', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    padding-bottom: 90px;
+  }
+  h1,h2,h3,.display{ font-family:'Bricolage Grotesque', sans-serif; }
+  button{ font-family: inherit; cursor:pointer; border:none; background:none; color:inherit; }
+  input, textarea, select{ font-family: inherit; }
+  ::selection{ background: var(--forest-light); color:#fff; }
+
+  /* ---------------- Header ---------------- */
+  header{
+    position: sticky; top:0; z-index: 50;
+    background: var(--paper);
+    border-bottom: 1px solid var(--line);
+    padding: 14px 18px 0;
+  }
+  .head-row{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom: 12px;
+  }
+  .head-title{
+    font-size: 22px; font-weight: 700; letter-spacing: -0.01em;
+  }
+  .head-sub{ font-size: 12.5px; color: var(--ink-dim); margin-top: 1px; }
+  .head-actions{ display:flex; gap:8px; }
+  .icon-btn{
+    width:38px; height:38px; border-radius: 10px;
+    display:flex; align-items:center; justify-content:center;
+    background: var(--white); border:1px solid var(--line);
+    transition: transform .15s var(--ease), background .15s;
+  }
+  .icon-btn:active{ transform: scale(0.92); }
+  .icon-btn svg{ width:18px; height:18px; stroke: var(--ink); }
+  .icon-btn.active{ background: var(--forest); border-color: var(--forest); }
+  .icon-btn.active svg{ stroke:#fff; }
+
+  .view-toggle{
+    display:flex; gap: 4px; background: var(--paper-2);
+    padding: 4px; border-radius: 11px; margin-bottom: 12px;
+  }
+  .view-toggle button{
+    flex:1; padding: 8px 0; border-radius: 8px;
+    font-size: 13px; font-weight:600; color: var(--ink-dim);
+    transition: background .2s var(--ease), color .2s;
+  }
+  .view-toggle button.active{ background: var(--white); color: var(--ink); box-shadow: var(--shadow); }
+
+  /* ---------------- Search / filter bar ---------------- */
+  .search-bar{
+    display:none; gap:8px; padding-bottom: 12px;
+    animation: slideDown .25s var(--ease);
+  }
+  .search-bar.show{ display:flex; }
+  @keyframes slideDown{ from{ opacity:0; transform: translateY(-6px);} to{ opacity:1; transform:translateY(0);} }
+  .search-bar input{
+    flex:1; border:1px solid var(--line); background: var(--white);
+    border-radius: 10px; padding: 9px 12px; font-size: 14px; color: var(--ink);
+  }
+  .search-bar input:focus{ outline: none; border-color: var(--forest); }
+
+  .cat-filters{
+    display:none; gap:8px; padding-bottom: 12px; overflow-x:auto;
+    scrollbar-width: none;
+  }
+  .cat-filters.show{ display:flex; }
+  .cat-filters::-webkit-scrollbar{ display:none; }
+  .cat-chip{
+    flex-shrink:0; display:flex; align-items:center; gap:6px;
+    padding: 6px 12px; border-radius: 999px; border:1.5px solid var(--line);
+    font-size: 12.5px; font-weight:600; color: var(--ink-dim); background: var(--white);
+    transition: .15s var(--ease);
+  }
+  .cat-chip .dot{ width:8px; height:8px; border-radius:50%; }
+  .cat-chip.active{ border-color: var(--ink); color: var(--ink); background: var(--paper-2); }
+
+  /* ---------------- Today strip (signature element) ---------------- */
+  .strip-wrap{
+    padding: 4px 18px 16px;
+    background: var(--paper);
+  }
+  .strip-label{
+    font-size: 11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+    color: var(--forest); margin-bottom: 8px; display:flex; align-items:center; gap:6px;
+  }
+  .strip-scroll{
+    display:flex; overflow-x:auto; scrollbar-width:none; gap:0;
+    border-radius: 12px; background: var(--white); border:1px solid var(--line);
+    padding: 10px 6px;
+  }
+  .strip-scroll::-webkit-scrollbar{ display:none; }
+  .strip-hour{
+    flex-shrink:0; width: 46px; text-align:center; position:relative;
+    padding: 2px 0 10px;
+  }
+  .strip-hour .h-label{ font-family:'Bricolage Grotesque',sans-serif; font-size: 11px; color: var(--ink-dim); font-weight:600; }
+  .strip-hour .h-track{
+    height: 3px; background: var(--paper-2); border-radius: 3px; margin-top: 8px; position:relative;
+  }
+  .strip-hour .h-dot{
+    position:absolute; top:-3px; width:9px; height:9px; border-radius:50%;
+    border:2px solid var(--white); box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
+  }
+  .strip-hour.now .h-label{ color: var(--forest); }
+  .strip-hour.now .h-track{ background: var(--forest-light); }
+  .now-tick{
+    position:absolute; top:0; bottom:0; width:2px; background: var(--red);
+  }
+
+  /* ---------------- Main content ---------------- */
+  main{ padding: 18px; max-width: 640px; margin: 0 auto; }
+
+  .day-heading{
+    display:flex; align-items:baseline; justify-content:space-between; margin-bottom: 14px;
+  }
+  .day-heading h2{ font-size: 19px; font-weight:700; text-transform: capitalize; }
+  .day-heading .count{ font-size: 12.5px; color: var(--ink-dim); }
+
+  .nav-arrows{ display:flex; gap:6px; align-items:center; }
+  .nav-arrows button{
+    width:30px; height:30px; border-radius:8px; background: var(--white); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .nav-arrows svg{ width:14px; height:14px; stroke: var(--ink); }
+
+  /* Task cards */
+  .task-list{ display:flex; flex-direction:column; gap:10px; }
+  .task-card{
+    background: var(--white); border-radius: var(--radius);
+    padding: 13px 14px; display:flex; gap:12px; align-items:flex-start;
+    border-left: 4px solid var(--forest);
+    box-shadow: var(--shadow);
+    animation: cardIn .35s var(--ease) both;
+    transition: transform .15s var(--ease);
+  }
+  .task-card.overdue{ border-left-color: var(--red); }
+  .task-card.done{ opacity: 0.5; }
+  .task-card.done .task-title{ text-decoration: line-through; }
+  @keyframes cardIn{ from{ opacity:0; transform: translateY(8px);} to{ opacity:1; transform:translateY(0);} }
+
+  .task-check{
+    width:23px; height:23px; border-radius:50%; border:2px solid var(--line);
+    flex-shrink:0; margin-top:1px; display:flex; align-items:center; justify-content:center;
+    transition: .18s var(--ease); background:var(--white);
+  }
+  .task-check.checked{ background: var(--forest); border-color: var(--forest); }
+  .task-check svg{ width:13px; height:13px; stroke:#fff; opacity:0; transform: scale(0.5); transition: .18s var(--ease); }
+  .task-check.checked svg{ opacity:1; transform: scale(1); }
+
+  .task-body{ flex:1; min-width:0; }
+  .task-top{ display:flex; align-items:center; gap:7px; margin-bottom: 2px; flex-wrap:wrap; }
+  .task-time{ font-family:'Bricolage Grotesque',sans-serif; font-size: 13px; font-weight:700; color: var(--forest); }
+  .task-time.overdue{ color: var(--red); }
+  .task-recur{ display:flex; align-items:center; }
+  .task-recur svg{ width:12px; height:12px; stroke: var(--ink-dim); }
+  .task-title{ font-size: 15px; font-weight:600; color: var(--ink); word-break: break-word; }
+  .task-desc{ font-size: 13px; color: var(--ink-dim); margin-top:2px; word-break: break-word; }
+  .task-cat{
+    display:inline-flex; align-items:center; gap:5px; margin-top:6px;
+    font-size: 11px; font-weight:600; color: var(--ink-dim);
+  }
+  .task-cat .dot{ width:7px; height:7px; border-radius:50%; }
+  .task-del{
+    width:28px; height:28px; border-radius:8px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; color: var(--ink-dim);
+  }
+  .task-del svg{ width:15px; height:15px; stroke: currentColor; }
+
+  .empty-state{
+    text-align:center; padding: 60px 20px; color: var(--ink-dim);
+  }
+  .empty-state svg{ width:40px; height:40px; stroke: var(--line); margin-bottom:14px; }
+  .empty-state p{ font-size: 14px; }
+
+  /* ---------------- Week view ---------------- */
+  .week-grid{ display:flex; flex-direction:column; gap:8px; }
+  .week-day-row{
+    display:flex; align-items:center; gap:12px; background:var(--white);
+    border-radius: 12px; padding: 12px 14px; border:1px solid var(--line);
+    transition: .15s var(--ease);
+  }
+  .week-day-row:active{ transform: scale(0.98); }
+  .week-day-row.today{ border-color: var(--forest); background: #F1F6F1; }
+  .wdr-date{ width:44px; text-align:center; flex-shrink:0; }
+  .wdr-date .dow{ font-size:10.5px; font-weight:700; text-transform:uppercase; color: var(--ink-dim); }
+  .wdr-date .num{ font-family:'Bricolage Grotesque',sans-serif; font-size:20px; font-weight:700; }
+  .wdr-dots{ flex:1; display:flex; gap:5px; flex-wrap:wrap; align-items:center; }
+  .wdr-dots .dot{ width:8px; height:8px; border-radius:50%; }
+  .wdr-dots .none{ font-size:12px; color: var(--ink-dim); font-style:italic; }
+  .wdr-count{ font-size: 12px; color: var(--ink-dim); font-weight:600; flex-shrink:0; }
+
+  /* ---------------- Month view ---------------- */
+  .month-grid{
+    display:grid; grid-template-columns: repeat(7,1fr); gap:5px;
+  }
+  .month-dow{ text-align:center; font-size:10.5px; font-weight:700; color: var(--ink-dim); padding-bottom:6px; text-transform:uppercase; }
+  .month-cell{
+    aspect-ratio: 1; border-radius:10px; background: var(--white); border:1px solid var(--line);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+    position:relative; transition:.15s var(--ease);
+  }
+  .month-cell.empty{ background:transparent; border-color:transparent; }
+  .month-cell.today{ border-color: var(--forest); border-width:2px; }
+  .month-cell.selected{ background: var(--forest); }
+  .month-cell.selected .num{ color:#fff; }
+  .month-cell:active{ transform: scale(0.93); }
+  .month-cell .num{ font-family:'Bricolage Grotesque',sans-serif; font-size:14px; font-weight:600; }
+  .month-cell .dots{ display:flex; gap:2px; }
+  .month-cell .dots .dot{ width:5px; height:5px; border-radius:50%; }
+
+  /* ---------------- FAB ---------------- */
+  .fab{
+    position: fixed; right:20px; bottom:22px; z-index:60;
+    width:58px; height:58px; border-radius:50%;
+    background: var(--forest); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 10px 26px rgba(51,83,58,0.4);
+    transition: transform .2s var(--ease);
+  }
+  .fab:active{ transform: scale(0.9) rotate(90deg); }
+  .fab svg{ width:26px; height:26px; stroke:#fff; }
+
+  /* ---------------- Bottom sheet (add/edit task) ---------------- */
+  .sheet-overlay{
+    position:fixed; inset:0; background: rgba(34,40,31,0.45); z-index:100;
+    opacity:0; pointer-events:none; transition: opacity .25s var(--ease);
+  }
+  .sheet-overlay.show{ opacity:1; pointer-events:auto; }
+  .sheet{
+    position:fixed; left:0; right:0; bottom:0; z-index:101;
+    background: var(--paper); border-radius: 22px 22px 0 0;
+    padding: 10px 20px calc(20px + env(safe-area-inset-bottom));
+    max-height: 88vh; overflow-y:auto;
+    transform: translateY(100%); transition: transform .32s var(--ease);
+    box-shadow: 0 -12px 40px rgba(0,0,0,0.2);
+  }
+  .sheet.show{ transform: translateY(0); }
+  .sheet-handle{ width:36px; height:4px; background: var(--line); border-radius:4px; margin: 4px auto 14px; }
+  .sheet h3{ font-size:18px; font-weight:700; margin-bottom:16px; }
+  .field{ margin-bottom: 14px; }
+  .field label{ display:block; font-size:12.5px; font-weight:600; color: var(--ink-dim); margin-bottom:6px; }
+  .field input[type=text], .field input[type=date], .field input[type=time], .field textarea, .field select{
+    width:100%; border:1.5px solid var(--line); background: var(--white);
+    border-radius: 10px; padding: 11px 12px; font-size:15px; color: var(--ink);
+  }
+  .field input:focus, .field textarea:focus, .field select:focus{ outline:none; border-color: var(--forest); }
+  .field textarea{ resize:vertical; min-height:60px; }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+  .color-row{ display:flex; gap:10px; flex-wrap:wrap; }
+  .color-dot{
+    width:34px; height:34px; border-radius:50%; border:3px solid transparent;
+    display:flex; align-items:center; justify-content:center; transition:.15s var(--ease);
+  }
+  .color-dot.selected{ border-color: var(--ink); transform: scale(1.08); }
+  .color-dot svg{ width:14px; height:14px; stroke:#fff; opacity:0; }
+  .color-dot.selected svg{ opacity:1; }
+
+  .chip-row{ display:flex; gap:8px; flex-wrap:wrap; }
+  .chip-opt{
+    padding:8px 13px; border-radius:999px; border:1.5px solid var(--line); background:var(--white);
+    font-size:13px; font-weight:600; color: var(--ink-dim); transition:.15s var(--ease);
+  }
+  .chip-opt.active{ background: var(--forest); border-color: var(--forest); color:#fff; }
+
+  .sheet-actions{ display:flex; gap:10px; margin-top: 6px; }
+  .btn{
+    flex:1; padding:14px; border-radius:12px; font-size:15px; font-weight:700;
+    transition:.15s var(--ease);
+  }
+  .btn:active{ transform: scale(0.97); }
+  .btn-primary{ background: var(--forest); color:#fff; }
+  .btn-ghost{ background: var(--white); border:1.5px solid var(--line); color: var(--ink); }
+  .btn-danger-text{ color: var(--red); font-size:13px; font-weight:600; text-align:center; padding:10px; }
+
+  /* Category manager */
+  .cat-manage-row{ display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); }
+  .cat-manage-row:last-child{ border-bottom:none; }
+  .cat-manage-row input[type=text]{ flex:1; border:none; background:transparent; font-size:14px; padding:4px 0; }
+  .cat-manage-row input[type=text]:focus{ outline:none; }
+  .cat-swatch{ width:20px; height:20px; border-radius:50%; flex-shrink:0; }
+  .cat-manage-del{ color: var(--ink-dim); }
+  .cat-manage-del svg{ width:16px; height:16px; }
+  .add-cat-btn{
+    display:flex; align-items:center; gap:8px; padding:10px 0; color: var(--forest); font-weight:600; font-size:14px;
+  }
+
+  /* Toast */
+  .toast{
+    position:fixed; left:50%; bottom:100px; transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color:#fff; padding:12px 18px; border-radius:12px;
+    font-size:13.5px; font-weight:600; z-index:200; opacity:0; transition:.25s var(--ease);
+    pointer-events:none; box-shadow: var(--shadow-lg); display:flex; align-items:center; gap:8px;
+  }
+  .toast.show{ opacity:1; transform: translateX(-50%) translateY(0); }
+
+  /* Settings sheet extra */
+  .setting-row{ display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--line); }
+  .setting-row:last-child{ border-bottom:none; }
+  .setting-row .s-label{ font-size:14px; font-weight:600; }
+  .setting-row .s-sub{ font-size:12px; color: var(--ink-dim); margin-top:1px; }
+  .switch{ width:44px; height:26px; border-radius:999px; background: var(--line); position:relative; transition:.2s; flex-shrink:0; }
+  .switch.on{ background: var(--forest); }
+  .switch .knob{ width:20px; height:20px; border-radius:50%; background:#fff; position:absolute; top:3px; left:3px; transition:.2s var(--ease); box-shadow:0 1px 3px rgba(0,0,0,0.3); }
+  .switch.on .knob{ left:21px; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-row">
+    <div>
+      <div class="head-title" id="headTitle">Journal</div>
+      <div class="head-sub" id="headSub">—</div>
+    </div>
+    <div class="head-actions">
+      <button class="icon-btn" id="btnSearch" aria-label="Rechercher">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+      </button>
+      <button class="icon-btn" id="btnFilter" aria-label="Filtrer">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="4 4 20 4 14 12.5 14 19 10 21 10 12.5 4 4"/></svg>
+      </button>
+      <button class="icon-btn" id="btnSettings" aria-label="Réglages">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="search-bar" id="searchBar">
+    <input type="text" id="searchInput" placeholder="Rechercher une tâche...">
+  </div>
+  <div class="cat-filters" id="catFilters"></div>
+
+  <div class="view-toggle">
+    <button data-view="day" class="active">Jour</button>
+    <button data-view="week">Semaine</button>
+    <button data-view="month">Mois</button>
+  </div>
+</header>
+
+<div class="strip-wrap" id="stripWrap">
+  <div class="strip-label">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+    Aperçu de la journée
+  </div>
+  <div class="strip-scroll" id="stripScroll"></div>
+</div>
+
+<main>
+  <div class="day-heading">
+    <div>
+      <h2 id="viewTitle">—</h2>
+      <div class="count" id="viewCount"></div>
+    </div>
+    <div class="nav-arrows">
+      <button id="navPrev" aria-label="Précédent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <button id="navToday" style="width:auto; padding:0 10px; font-size:12px; font-weight:700; color:var(--forest);">Aujourd'hui</button>
+      <button id="navNext" aria-label="Suivant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+    </div>
+  </div>
+
+  <div id="viewContent"></div>
+</main>
+
+<button class="fab" id="btnAdd" aria-label="Ajouter une tâche">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+</button>
+
+<!-- Sheet: Add/Edit Task -->
+<div class="sheet-overlay" id="taskOverlay"></div>
+<div class="sheet" id="taskSheet">
+  <div class="sheet-handle"></div>
+  <h3 id="taskSheetTitle">Nouvelle tâche</h3>
+
+  <div class="field">
+    <label>Titre</label>
+    <input type="text" id="fTitle" placeholder="Ex. Appeler le fournisseur">
+  </div>
+  <div class="field">
+    <label>Description (optionnel)</label>
+    <textarea id="fDesc" placeholder="Détails..."></textarea>
+  </div>
+  <div class="row2">
+    <div class="field">
+      <label>Date</label>
+      <input type="date" id="fDate">
+    </div>
+    <div class="field">
+      <label>Heure (optionnel)</label>
+      <input type="time" id="fTime">
+    </div>
+  </div>
+  <div class="field">
+    <label>Catégorie</label>
+    <div class="color-row" id="fCatRow"></div>
+  </div>
+  <div class="field">
+    <label>Répétition</label>
+    <div class="chip-row" id="fRecurRow">
+      <button class="chip-opt active" data-recur="none">Aucune</button>
+      <button class="chip-opt" data-recur="daily">Chaque jour</button>
+      <button class="chip-opt" data-recur="weekly">Chaque semaine</button>
+      <button class="chip-opt" data-recur="monthly">Chaque mois</button>
+      <button class="chip-opt" data-recur="weekdays">Jours ouvrés</button>
+    </div>
+  </div>
+  <div class="field">
+    <label>Rappel</label>
+    <div class="chip-row" id="fReminderRow">
+      <button class="chip-opt active" data-min="0">À l'heure</button>
+      <button class="chip-opt" data-min="15">15 min avant</button>
+      <button class="chip-opt" data-min="60">1h avant</button>
+      <button class="chip-opt" data-min="-1">Aucun</button>
+    </div>
+  </div>
+
+  <div class="sheet-actions">
+    <button class="btn btn-ghost" id="btnCancelTask">Annuler</button>
+    <button class="btn btn-primary" id="btnSaveTask">Enregistrer</button>
+  </div>
+  <div class="btn-danger-text" id="btnDeleteTask" style="display:none;">Supprimer cette tâche</div>
+</div>
+
+<!-- Sheet: Settings -->
+<div class="sheet-overlay" id="settingsOverlay"></div>
+<div class="sheet" id="settingsSheet">
+  <div class="sheet-handle"></div>
+  <h3>Réglages</h3>
+
+  <div class="setting-row">
+    <div>
+      <div class="s-label">Rappels (son, vibration, pop-up)</div>
+      <div class="s-sub">Fonctionne quand l'app est ouverte ou récemment utilisée</div>
+    </div>
+    <div class="switch" id="switchNotif"><div class="knob"></div></div>
+  </div>
+
+  <div class="field" style="margin-top:18px;">
+    <label>Mes catégories</label>
+    <div id="catManageList"></div>
+    <div class="add-cat-btn" id="btnAddCat">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Ajouter une catégorie
+    </div>
+  </div>
+
+  <div class="field" style="margin-top:10px;">
+    <label>Données</label>
+    <div class="sheet-actions" style="margin-top:4px;">
+      <button class="btn btn-ghost" id="btnExport">Exporter (sauvegarde)</button>
+      <button class="btn btn-ghost" id="btnImport">Importer</button>
+    </div>
+    <input type="file" id="fileImport" accept=".json" style="display:none;">
+  </div>
+
+  <div class="sheet-actions" style="margin-top:18px;">
+    <button class="btn btn-primary" id="btnCloseSettings">Fermer</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   JOURNAL — Agenda personnel
+   Stockage 100% local (localStorage). Fonctionne hors ligne.
+============================================================ */
+
+const STORE_KEY = 'journal_tasks_v1';
+const CAT_KEY = 'journal_categories_v1';
+const SETTINGS_KEY = 'journal_settings_v1';
+const NOTIFIED_KEY = 'journal_notified_v1';
+
+const DEFAULT_CATEGORIES = [
+  { id: 'c1', name: 'Perfect Services', color: '#33533A' },
+  { id: 'c2', name: 'EDELUXE', color: '#C77D34' },
+  { id: 'c3', name: 'Personnel', color: '#5B7DA6' },
+  { id: 'c4', name: 'Urgent', color: '#B5493A' },
+];
+
+const DOW_LABELS = ['DIM','LUN','MAR','MER','JEU','VEN','SAM'];
+const DOW_FULL = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+const MONTH_LABELS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+
+/* ---------------- State ---------------- */
+let tasks = load(STORE_KEY, []);
+let categories = load(CAT_KEY, DEFAULT_CATEGORIES);
+let settings = load(SETTINGS_KEY, { notifications: false });
+let notifiedSet = new Set(load(NOTIFIED_KEY, []));
+
+let currentView = 'day';
+let currentDate = new Date();
+let selectedFilterCats = new Set();
+let searchQuery = '';
+let editingTaskId = null;
+let editingCatColor = null;
+
+function load(key, fallback){
+  try{
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  }catch(e){ return fallback; }
+}
+function save(key, val){
+  localStorage.setItem(key, JSON.stringify(val));
+}
+function saveTasks(){ save(STORE_KEY, tasks); }
+function saveCategories(){ save(CAT_KEY, categories); }
+function saveSettings(){ save(SETTINGS_KEY, settings); }
+function saveNotified(){ save(NOTIFIED_KEY, Array.from(notifiedSet)); }
+
+function uid(){ return 't' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function pad2(n){ return String(n).padStart(2,'0'); }
+function fmtDate(d){ return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate()); }
+function parseDate(s){ const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
+function isSameDay(a,b){ return fmtDate(a)===fmtDate(b); }
+function todayStr(){ return fmtDate(new Date()); }
+function catById(id){ return categories.find(c=>c.id===id) || categories[0] || {color:'#999', name:'—'}; }
+
+/* ---------------- Occurrence generation (recurring tasks) ---------------- */
+function occursOnDate(task, dateStr){
+  const d = parseDate(dateStr);
+  const start = parseDate(task.date);
+  if(d < new Date(start.getFullYear(), start.getMonth(), start.getDate())) return false;
+  switch(task.recurrence){
+    case 'none': return task.date === dateStr;
+    case 'daily': return true;
+    case 'weekly': return d.getDay() === start.getDay();
+    case 'monthly': return d.getDate() === start.getDate();
+    case 'weekdays': return d.getDay() >= 1 && d.getDay() <= 5;
+    default: return task.date === dateStr;
+  }
+}
+function tasksForDate(dateStr){
+  return tasks.filter(t => occursOnDate(t, dateStr));
+}
+function isDoneOn(task, dateStr){
+  return (task.completedDates||[]).includes(dateStr);
+}
+function toggleDone(taskId, dateStr){
+  const t = tasks.find(x=>x.id===taskId);
+  if(!t) return;
+  t.completedDates = t.completedDates || [];
+  const i = t.completedDates.indexOf(dateStr);
+  if(i>=0) t.completedDates.splice(i,1);
+  else t.completedDates.push(dateStr);
+  saveTasks();
+}
+
+/* ---------------- Filtering ---------------- */
+function matchesFilters(task){
+  if(selectedFilterCats.size>0 && !selectedFilterCats.has(task.categoryId)) return false;
+  if(searchQuery){
+    const q = searchQuery.toLowerCase();
+    if(!task.title.toLowerCase().includes(q) && !(task.description||'').toLowerCase().includes(q)) return false;
+  }
+  return true;
+}
+
+/* ---------------- Rendering: header ---------------- */
+function renderHeader(){
+  const now = new Date();
+  document.getElementById('headSub').textContent =
+    DOW_FULL[now.getDay()].charAt(0).toUpperCase()+DOW_FULL[now.getDay()].slice(1) + ' ' + now.getDate() + ' ' + MONTH_LABELS[now.getMonth()];
+}
+
+/* ---------------- Rendering: today strip ---------------- */
+function renderStrip(){
+  const wrap = document.getElementById('stripWrap');
+  if(currentView !== 'day'){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  const dateStr = fmtDate(currentDate);
+  const dayTasks = tasksForDate(dateStr).filter(t=>t.time);
+  const scroll = document.getElementById('stripScroll');
+  scroll.innerHTML = '';
+  const now = new Date();
+  const isToday = isSameDay(currentDate, now);
+  const currentHour = now.getHours();
+
+  for(let h=0; h<24; h++){
+    const div = document.createElement('div');
+    div.className = 'strip-hour' + (isToday && h===currentHour ? ' now' : '');
+    const label = document.createElement('div');
+    label.className = 'h-label';
+    label.textContent = pad2(h)+'h';
+    const track = document.createElement('div');
+    track.className = 'h-track';
+    dayTasks.forEach(t=>{
+      const th = parseInt(t.time.split(':')[0]);
+      if(th === h){
+        const dot = document.createElement('div');
+        dot.className = 'h-dot';
+        dot.style.background = catById(t.categoryId).color;
+        const tm = parseInt(t.time.split(':')[1]);
+        dot.style.left = Math.min(85, (tm/60)*100) + '%';
+        track.appendChild(dot);
+      }
+    });
+    div.appendChild(label);
+    div.appendChild(track);
+    scroll.appendChild(div);
+  }
+  if(isToday){
+    requestAnimationFrame(()=>{
+      const el = scroll.children[currentHour];
+      if(el) scroll.scrollTo({ left: el.offsetLeft - 60, behavior:'smooth' });
+    });
+  }
+}
+
+/* ---------------- Rendering: category filters ---------------- */
+function renderCatFilters(){
+  const wrap = document.getElementById('catFilters');
+  wrap.innerHTML = '';
+  categories.forEach(c=>{
+    const chip = document.createElement('button');
+    chip.className = 'cat-chip' + (selectedFilterCats.has(c.id) ? ' active':'');
+    chip.innerHTML = `<span class="dot" style="background:${c.color}"></span>${c.name}`;
+    chip.onclick = ()=>{
+      if(selectedFilterCats.has(c.id)) selectedFilterCats.delete(c.id);
+      else selectedFilterCats.add(c.id);
+      renderCatFilters();
+      renderView();
+    };
+    wrap.appendChild(chip);
+  });
+}
+
+/* ---------------- Rendering: main view router ---------------- */
+function renderView(){
+  const content = document.getElementById('viewContent');
+  const title = document.getElementById('viewTitle');
+  const count = document.getElementById('viewCount');
+  content.innerHTML = '';
+
+  if(currentView === 'day'){
+    renderStrip();
+    const dateStr = fmtDate(currentDate);
+    const isToday = isSameDay(currentDate, new Date());
+    title.textContent = isToday ? "Aujourd'hui" : DOW_FULL[currentDate.getDay()] + ' ' + currentDate.getDate() + ' ' + MONTH_LABELS[currentDate.getMonth()];
+
+    let dayTasks = tasksForDate(dateStr).filter(matchesFilters);
+    dayTasks.sort((a,b)=> (a.time||'99:99').localeCompare(b.time||'99:99'));
+    count.textContent = dayTasks.length + (dayTasks.length>1 ? ' tâches' : ' tâche');
+
+    if(dayTasks.length===0){
+      content.innerHTML = emptyStateHtml("Rien de prévu. Profitez-en, ou appuyez sur + pour ajouter quelque chose.");
+      return;
+    }
+    const list = document.createElement('div');
+    list.className = 'task-list';
+    const nowStr = pad2(new Date().getHours())+':'+pad2(new Date().getMinutes());
+    dayTasks.forEach((t,i)=>{
+      const done = isDoneOn(t, dateStr);
+      const overdue = isToday && t.time && t.time < nowStr && !done;
+      list.appendChild(taskCard(t, dateStr, done, overdue, i));
+    });
+    content.appendChild(list);
+
+  } else if(currentView === 'week'){
+    document.getElementById('stripWrap').style.display='none';
+    const start = startOfWeek(currentDate);
+    const end = new Date(start); end.setDate(end.getDate()+6);
+    title.textContent = start.getDate()+' '+MONTH_LABELS[start.getMonth()].slice(0,3)+' – '+end.getDate()+' '+MONTH_LABELS[end.getMonth()].slice(0,3);
+    count.textContent = '';
+
+    const grid = document.createElement('div');
+    grid.className = 'week-grid';
+    for(let i=0;i<7;i++){
+      const d = new Date(start); d.setDate(d.getDate()+i);
+      const dateStr = fmtDate(d);
+      const dayTasks = tasksForDate(dateStr).filter(matchesFilters);
+      const row = document.createElement('div');
+      row.className = 'week-day-row' + (isSameDay(d,new Date()) ? ' today':'');
+      const dotsHtml = dayTasks.length
+        ? dayTasks.slice(0,8).map(t=>`<span class="dot" style="background:${catById(t.categoryId).color}"></span>`).join('')
+        : '<span class="none">Rien de prévu</span>';
+      row.innerHTML = `
+        <div class="wdr-date"><div class="dow">${DOW_LABELS[d.getDay()]}</div><div class="num">${d.getDate()}</div></div>
+        <div class="wdr-dots">${dotsHtml}</div>
+        <div class="wdr-count">${dayTasks.length ? dayTasks.length : ''}</div>
+      `;
+      row.onclick = ()=>{ currentDate = d; currentView='day'; setActiveViewBtn(); renderView(); };
+      grid.appendChild(row);
+    }
+    content.appendChild(grid);
+
+  } else if(currentView === 'month'){
+    document.getElementById('stripWrap').style.display='none';
+    title.textContent = MONTH_LABELS[currentDate.getMonth()] + ' ' + currentDate.getFullYear();
+    count.textContent = '';
+
+    const grid = document.createElement('div');
+    grid.className = 'month-grid';
+    DOW_LABELS.forEach(l=>{
+      const el = document.createElement('div');
+      el.className='month-dow'; el.textContent=l[0];
+      grid.appendChild(el);
+    });
+    const firstOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    const startOffset = firstOfMonth.getDay();
+    const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth()+1, 0).getDate();
+
+    for(let i=0;i<startOffset;i++){
+      const el = document.createElement('div');
+      el.className='month-cell empty';
+      grid.appendChild(el);
+    }
+    for(let day=1; day<=daysInMonth; day++){
+      const d = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+      const dateStr = fmtDate(d);
+      const dayTasks = tasksForDate(dateStr).filter(matchesFilters);
+      const cell = document.createElement('div');
+      cell.className = 'month-cell' + (isSameDay(d,new Date())?' today':'');
+      const dotsHtml = dayTasks.slice(0,4).map(t=>`<span class="dot" style="background:${catById(t.categoryId).color}"></span>`).join('');
+      cell.innerHTML = `<div class="num">${day}</div><div class="dots">${dotsHtml}</div>`;
+      cell.onclick = ()=>{ currentDate = d; currentView='day'; setActiveViewBtn(); renderView(); };
+      grid.appendChild(cell);
+    }
+    content.appendChild(grid);
+  }
+}
+
+function startOfWeek(d){
+  const nd = new Date(d);
+  const day = nd.getDay();
+  const diff = day===0 ? -6 : 1-day; // semaine commence lundi
+  nd.setDate(nd.getDate()+diff);
+  return nd;
+}
+
+function emptyStateHtml(msg){
+  return `<div class="empty-state">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    <p>${msg}</p>
+  </div>`;
+}
+
+function taskCard(t, dateStr, done, overdue, idx){
+  const cat = catById(t.categoryId);
+  const card = document.createElement('div');
+  card.className = 'task-card' + (overdue ? ' overdue':'') + (done ? ' done':'');
+  card.style.borderLeftColor = overdue ? 'var(--red)' : cat.color;
+  card.style.animationDelay = (idx*0.04)+'s';
+
+  const recurIcon = t.recurrence !== 'none' ? `<span class="task-recur"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></span>` : '';
+
+  card.innerHTML = `
+    <div class="task-check ${done?'checked':''}">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="task-body">
+      <div class="task-top">
+        ${t.time ? `<span class="task-time ${overdue?'overdue':''}">${t.time}</span>` : ''}
+        ${recurIcon}
+      </div>
+      <div class="task-title">${escapeHtml(t.title)}</div>
+      ${t.description ? `<div class="task-desc">${escapeHtml(t.description)}</div>` : ''}
+      <div class="task-cat"><span class="dot" style="background:${cat.color}"></span>${escapeHtml(cat.name)}</div>
+    </div>
+    <button class="task-del"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+  `;
+  card.querySelector('.task-check').onclick = (e)=>{
+    e.stopPropagation();
+    toggleDone(t.id, dateStr);
+    renderView();
+    if(!done) showToast('Tâche terminée ✓');
+  };
+  card.querySelector('.task-del').onclick = (e)=>{
+    e.stopPropagation();
+    openTaskSheet(t);
+  };
+  card.onclick = ()=> openTaskSheet(t);
+  return card;
+}
+
+function escapeHtml(s){
+  return String(s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+/* ---------------- View toggle & nav ---------------- */
+function setActiveViewBtn(){
+  document.querySelectorAll('.view-toggle button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.view===currentView);
+  });
+}
+document.querySelectorAll('.view-toggle button').forEach(b=>{
+  b.onclick = ()=>{ currentView = b.dataset.view; setActiveViewBtn(); renderView(); };
+});
+document.getElementById('navPrev').onclick = ()=>{ shiftDate(-1); };
+document.getElementById('navNext').onclick = ()=>{ shiftDate(1); };
+document.getElementById('navToday').onclick = ()=>{ currentDate = new Date(); renderView(); };
+
+function shiftDate(dir){
+  if(currentView==='day') currentDate.setDate(currentDate.getDate()+dir);
+  else if(currentView==='week') currentDate.setDate(currentDate.getDate()+7*dir);
+  else if(currentView==='month') currentDate.setMonth(currentDate.getMonth()+dir);
+  currentDate = new Date(currentDate);
+  renderView();
+}
+
+/* ---------------- Search & filter toggles ---------------- */
+document.getElementById('btnSearch').onclick = (e)=>{
+  const bar = document.getElementById('searchBar');
+  bar.classList.toggle('show');
+  e.currentTarget.classList.toggle('active');
+  if(bar.classList.contains('show')) document.getElementById('searchInput').focus();
+  else { searchQuery=''; document.getElementById('searchInput').value=''; renderView(); }
+};
+document.getElementById('searchInput').oninput = (e)=>{ searchQuery = e.target.value; renderView(); };
+document.getElementById('btnFilter').onclick = (e)=>{
+  document.getElementById('catFilters').classList.toggle('show');
+  e.currentTarget.classList.toggle('active');
+};
+
+/* ---------------- Task sheet ---------------- */
+const taskOverlay = document.getElementById('taskOverlay');
+const taskSheet = document.getElementById('taskSheet');
+
+function renderCatRow(){
+  const row = document.getElementById('fCatRow');
+  row.innerHTML = '';
+  categories.forEach(c=>{
+    const dot = document.createElement('button');
+    dot.type='button';
+    dot.className = 'color-dot';
+    dot.style.background = c.color;
+    dot.title = c.name;
+    dot.dataset.catId = c.id;
+    dot.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+    dot.onclick = ()=>{
+      row.querySelectorAll('.color-dot').forEach(x=>x.classList.remove('selected'));
+      dot.classList.add('selected');
+      row.dataset.selected = c.id;
+    };
+    row.appendChild(dot);
+  });
+}
+
+function openTaskSheet(task){
+  editingTaskId = task ? task.id : null;
+  document.getElementById('taskSheetTitle').textContent = task ? 'Modifier la tâche' : 'Nouvelle tâche';
+  document.getElementById('btnDeleteTask').style.display = task ? 'block' : 'none';
+  document.getElementById('fTitle').value = task ? task.title : '';
+  document.getElementById('fDesc').value = task ? (task.description||'') : '';
+  document.getElementById('fDate').value = task ? task.date : fmtDate(currentView==='day' ? currentDate : new Date());
+  document.getElementById('fTime').value = task ? (task.time||'') : '';
+
+  renderCatRow();
+  const row = document.getElementById('fCatRow');
+  const catId = task ? task.categoryId : (categories[0] && categories[0].id);
+  row.dataset.selected = catId;
+  row.querySelectorAll('.color-dot').forEach(d=> d.classList.toggle('selected', d.dataset.catId===catId));
+
+  document.querySelectorAll('#fRecurRow .chip-opt').forEach(b=>{
+    b.classList.toggle('active', b.dataset.recur === (task ? task.recurrence : 'none'));
+  });
+  const remMin = task ? (task.reminderMinutes===undefined ? 0 : task.reminderMinutes) : 0;
+  document.querySelectorAll('#fReminderRow .chip-opt').forEach(b=>{
+    b.classList.toggle('active', parseInt(b.dataset.min) === remMin);
+  });
+
+  taskOverlay.classList.add('show');
+  taskSheet.classList.add('show');
+}
+function closeTaskSheet(){
+  taskOverlay.classList.remove('show');
+  taskSheet.classList.remove('show');
+}
+document.getElementById('btnAdd').onclick = ()=> openTaskSheet(null);
+document.getElementById('btnCancelTask').onclick = closeTaskSheet;
+taskOverlay.onclick = closeTaskSheet;
+
+document.querySelectorAll('#fRecurRow .chip-opt').forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll('#fRecurRow .chip-opt').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+  };
+});
+document.querySelectorAll('#fReminderRow .chip-opt').forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll('#fReminderRow .chip-opt').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+  };
+});
+
+document.getElementById('btnSaveTask').onclick = ()=>{
+  const title = document.getElementById('fTitle').value.trim();
+  if(!title){ showToast('Ajoutez au moins un titre'); return; }
+  const date = document.getElementById('fDate').value || todayStr();
+  const time = document.getElementById('fTime').value || null;
+  const catId = document.getElementById('fCatRow').dataset.selected || (categories[0] && categories[0].id);
+  const recurBtn = document.querySelector('#fRecurRow .chip-opt.active');
+  const recur = recurBtn ? recurBtn.dataset.recur : 'none';
+  const remBtn = document.querySelector('#fReminderRow .chip-opt.active');
+  const remMin = remBtn ? parseInt(remBtn.dataset.min) : 0;
+  const desc = document.getElementById('fDesc').value.trim();
+
+  if(editingTaskId){
+    const t = tasks.find(x=>x.id===editingTaskId);
+    Object.assign(t, { title, description: desc, date, time, categoryId: catId, recurrence: recur, reminderMinutes: remMin });
+  } else {
+    tasks.push({
+      id: uid(), title, description: desc, date, time, categoryId: catId,
+      recurrence: recur, reminderMinutes: remMin, completedDates: [], createdAt: Date.now()
+    });
+  }
+  saveTasks();
+  closeTaskSheet();
+  renderView();
+  showToast(editingTaskId ? 'Tâche modifiée' : 'Tâche ajoutée ✓');
+};
+document.getElementById('btnDeleteTask').onclick = ()=>{
+  if(!editingTaskId) return;
+  tasks = tasks.filter(t=>t.id!==editingTaskId);
+  saveTasks();
+  closeTaskSheet();
+  renderView();
+  showToast('Tâche supprimée');
+};
+
+/* ---------------- Settings sheet ---------------- */
+const settingsOverlay = document.getElementById('settingsOverlay');
+const settingsSheet = document.getElementById('settingsSheet');
+document.getElementById('btnSettings').onclick = ()=>{
+  renderCatManageList();
+  document.getElementById('switchNotif').classList.toggle('on', settings.notifications);
+  settingsOverlay.classList.add('show');
+  settingsSheet.classList.add('show');
+};
+document.getElementById('btnCloseSettings').onclick = ()=>{
+  settingsOverlay.classList.remove('show');
+  settingsSheet.classList.remove('show');
+};
+settingsOverlay.onclick = ()=>{
+  settingsOverlay.classList.remove('show');
+  settingsSheet.classList.remove('show');
+};
+
+document.getElementById('switchNotif').onclick = async ()=>{
+  if(!settings.notifications){
+    if('Notification' in window){
+      const perm = await Notification.requestPermission();
+      if(perm !== 'granted'){ showToast('Autorisation refusée'); return; }
+    }
+    settings.notifications = true;
+  } else {
+    settings.notifications = false;
+  }
+  saveSettings();
+  document.getElementById('switchNotif').classList.toggle('on', settings.notifications);
+  showToast(settings.notifications ? 'Rappels activés' : 'Rappels désactivés');
+};
+
+function renderCatManageList(){
+  const list = document.getElementById('catManageList');
+  list.innerHTML = '';
+  categories.forEach(c=>{
+    const row = document.createElement('div');
+    row.className = 'cat-manage-row';
+    row.innerHTML = `
+      <span class="cat-swatch" style="background:${c.color}"></span>
+      <input type="text" value="${escapeHtml(c.name)}">
+      <button class="cat-manage-del"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    `;
+    row.querySelector('input').oninput = (e)=>{ c.name = e.target.value; saveCategories(); renderView(); };
+    row.querySelector('.cat-swatch').onclick = ()=>{
+      const colors = ['#33533A','#C77D34','#5B7DA6','#B5493A','#8B5FA3','#4A8C7C','#C9A227','#7A6F5D'];
+      const idx = colors.indexOf(c.color);
+      c.color = colors[(idx+1)%colors.length];
+      saveCategories(); renderCatManageList(); renderView();
+    };
+    row.querySelector('.cat-manage-del').onclick = ()=>{
+      if(categories.length<=1){ showToast('Gardez au moins une catégorie'); return; }
+      categories = categories.filter(x=>x.id!==c.id);
+      saveCategories(); renderCatManageList(); renderView();
+    };
+    list.appendChild(row);
+  });
+}
+document.getElementById('btnAddCat').onclick = ()=>{
+  categories.push({ id: uid(), name: 'Nouvelle catégorie', color: '#7A6F5D' });
+  saveCategories();
+  renderCatManageList();
+  renderCatFilters();
+};
+
+/* ---------------- Export / Import ---------------- */
+document.getElementById('btnExport').onclick = ()=>{
+  const data = { tasks, categories, exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'journal-sauvegarde-'+todayStr()+'.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Sauvegarde téléchargée');
+};
+document.getElementById('btnImport').onclick = ()=> document.getElementById('fileImport').click();
+document.getElementById('fileImport').onchange = (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    try{
+      const data = JSON.parse(ev.target.result);
+      if(data.tasks) tasks = data.tasks;
+      if(data.categories) categories = data.categories;
+      saveTasks(); saveCategories();
+      renderCatFilters(); renderCatManageList(); renderView();
+      showToast('Sauvegarde restaurée ✓');
+    }catch(err){ showToast('Fichier invalide'); }
+  };
+  reader.readAsText(file);
+};
+
+/* ---------------- Toast ---------------- */
+let toastTimer;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove('show'), 2200);
+}
+
+/* ---------------- Notifications / reminders ---------------- */
+function beep(){
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = 'sine'; o.frequency.value = 880;
+    g.gain.setValueAtTime(0.001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime+0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.5);
+    o.start(); o.stop(ctx.currentTime+0.55);
+    setTimeout(()=>{
+      const o2 = ctx.createOscillator(); const g2 = ctx.createGain();
+      o2.connect(g2); g2.connect(ctx.destination);
+      o2.type='sine'; o2.frequency.value = 1160;
+      g2.gain.setValueAtTime(0.001, ctx.currentTime);
+      g2.gain.exponentialRampToValueAtTime(0.22, ctx.currentTime+0.02);
+      g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.4);
+      o2.start(); o2.stop(ctx.currentTime+0.45);
+    }, 180);
+  }catch(e){}
+}
+
+function checkReminders(){
+  if(!settings.notifications) return;
+  const now = new Date();
+  const dateStr = fmtDate(now);
+  const nowMin = now.getHours()*60 + now.getMinutes();
+
+  tasks.forEach(t=>{
+    if(!t.time) return;
+    if(t.reminderMinutes === -1) return;
+    if(!occursOnDate(t, dateStr)) return;
+    if(isDoneOn(t, dateStr)) return;
+    const [th,tm] = t.time.split(':').map(Number);
+    const taskMin = th*60+tm;
+    const remMin = t.reminderMinutes || 0;
+    const fireAt = taskMin - remMin;
+    const key = t.id+'_'+dateStr+'_'+t.time;
+    if(nowMin >= fireAt && nowMin <= fireAt+2 && !notifiedSet.has(key)){
+      fireNotification(t, dateStr);
+      notifiedSet.add(key);
+      saveNotified();
+    }
+  });
+}
+
+function fireNotification(task, dateStr){
+  beep();
+  if(navigator.vibrate) navigator.vibrate([200,100,200]);
+  const cat = catById(task.categoryId);
+  const body = task.time + ' — ' + (task.description || cat.name);
+  if('Notification' in window && Notification.permission === 'granted'){
+    try{
+      const n = new Notification(task.title, { body, tag: task.id+dateStr, icon: 'icon-192.png' });
+      n.onclick = ()=>{ window.focus(); };
+    }catch(e){}
+  }
+  showToast('⏰ ' + task.title);
+}
+
+setInterval(checkReminders, 20000);
+
+/* ---------------- Service worker (offline) ---------------- */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+
+/* ---------------- Init ---------------- */
+renderHeader();
+renderCatFilters();
+renderView();
+checkReminders();
+setInterval(renderHeader, 60000);
+</script>
+</body>
+</html>
