@@ -30,6 +30,24 @@
     --shadow-lg: 0 12px 32px rgba(34,40,31,0.14);
     --radius: 14px;
     --ease: cubic-bezier(.22,.61,.36,1);
+    transition: background .3s var(--ease);
+  }
+  body.dark-mode{
+    --paper: #14170F;
+    --paper-2: #1D2317;
+    --line: #313A26;
+    --ink: #ECE7D6;
+    --ink-dim: #8E937F;
+    --white: #1F2618;
+    --forest: #5C9166;
+    --forest-dark: #4A7A54;
+    --forest-light: #7FAE86;
+    --amber: #E0954E;
+    --amber-bg: #2E2418;
+    --red: #E07862;
+    --red-bg: #2E1B17;
+    --shadow: 0 2px 10px rgba(0,0,0,0.3);
+    --shadow-lg: 0 12px 32px rgba(0,0,0,0.5);
   }
   *{ box-sizing: border-box; margin:0; padding:0; -webkit-tap-highlight-color: transparent; }
   html,body{ height:100%; overscroll-behavior-y: none; }
@@ -370,6 +388,48 @@
   .note-card .n-preview{ font-size:12.5px; color: var(--ink-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .note-card .n-date{ font-size:10.5px; color: var(--forest-light); margin-top:5px; font-weight:600; }
 
+  /* ---------------- Alarme plein écran ---------------- */
+  .alarm-overlay{
+    position:fixed; inset:0; z-index:500;
+    display:none; align-items:center; justify-content:center;
+    background: var(--red);
+    animation: alarmFlash 1s steps(1) infinite;
+  }
+  .alarm-overlay.show{ display:flex; }
+  @keyframes alarmFlash{
+    0%, 49%{ background: var(--red); }
+    50%, 100%{ background: #7A241A; }
+  }
+  .alarm-inner{ text-align:center; padding: 30px; }
+  .alarm-bell{
+    font-size: 72px; margin-bottom: 18px;
+    animation: bellShake 0.7s ease-in-out infinite;
+    display:inline-block;
+  }
+  @keyframes bellShake{
+    0%, 100%{ transform: rotate(0deg); }
+    15%{ transform: rotate(-18deg); }
+    30%{ transform: rotate(14deg); }
+    45%{ transform: rotate(-10deg); }
+    60%{ transform: rotate(7deg); }
+    75%{ transform: rotate(-4deg); }
+  }
+  .alarm-time{
+    font-family:'Bricolage Grotesque',sans-serif; font-size: 20px; font-weight:700;
+    color: rgba(255,255,255,0.85); margin-bottom: 6px; letter-spacing: .04em;
+  }
+  .alarm-title{
+    font-family:'Bricolage Grotesque',sans-serif; font-size: 30px; font-weight:800;
+    color:#fff; margin-bottom: 10px; line-height:1.15; padding: 0 10px;
+  }
+  .alarm-cat{ font-size: 14px; color: rgba(255,255,255,0.75); margin-bottom: 40px; font-weight:600; }
+  .alarm-stop{
+    background:#fff; color: var(--red); font-weight:800; font-size:17px;
+    padding: 18px 52px; border-radius: 999px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    letter-spacing: .02em;
+  }
+  .alarm-stop:active{ transform: scale(0.95); }
+
   @media (prefers-reduced-motion: reduce){
     *{ animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
   }
@@ -511,6 +571,14 @@
     <div class="switch" id="switchNotif"><div class="knob"></div></div>
   </div>
 
+  <div class="setting-row">
+    <div>
+      <div class="s-label">Fond sombre</div>
+      <div class="s-sub">Plus confortable le soir ou en fin de journée</div>
+    </div>
+    <div class="switch" id="switchDark"><div class="knob"></div></div>
+  </div>
+
   <div class="field" style="margin-top:18px;">
     <label>Mes catégories</label>
     <div id="catManageList"></div>
@@ -568,6 +636,16 @@
   <div class="btn-danger-text" id="btnDeleteNote" style="display:none;">Supprimer cette note</div>
 </div>
 
+<div class="alarm-overlay" id="alarmOverlay">
+  <div class="alarm-inner">
+    <div class="alarm-bell" id="alarmBell">🔔</div>
+    <div class="alarm-time" id="alarmTime">—</div>
+    <div class="alarm-title" id="alarmTitleText">—</div>
+    <div class="alarm-cat" id="alarmCatText"></div>
+    <button class="alarm-stop" id="btnStopAlarm">Arrêter</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -595,7 +673,7 @@ const MONTH_LABELS = ['janvier','février','mars','avril','mai','juin','juillet'
 /* ---------------- State ---------------- */
 let tasks = load(STORE_KEY, []);
 let categories = load(CAT_KEY, DEFAULT_CATEGORIES);
-let settings = load(SETTINGS_KEY, { notifications: false });
+let settings = load(SETTINGS_KEY, { notifications: false, darkMode: false });
 let notifiedSet = new Set(load(NOTIFIED_KEY, []));
 
 let currentView = 'day';
@@ -1057,9 +1135,21 @@ const settingsSheet = document.getElementById('settingsSheet');
 document.getElementById('btnSettings').onclick = ()=>{
   renderCatManageList();
   document.getElementById('switchNotif').classList.toggle('on', settings.notifications);
+  document.getElementById('switchDark').classList.toggle('on', settings.darkMode);
   settingsOverlay.classList.add('show');
   settingsSheet.classList.add('show');
 };
+document.getElementById('switchDark').onclick = ()=>{
+  settings.darkMode = !settings.darkMode;
+  saveSettings();
+  applyDarkMode();
+  document.getElementById('switchDark').classList.toggle('on', settings.darkMode);
+};
+function applyDarkMode(){
+  document.body.classList.toggle('dark-mode', settings.darkMode);
+  const metaTheme = document.querySelector('meta[name=theme-color]');
+  if(metaTheme) metaTheme.setAttribute('content', settings.darkMode ? '#14170F' : '#F5F0E4');
+}
 document.getElementById('btnCloseSettings').onclick = ()=>{
   settingsOverlay.classList.remove('show');
   settingsSheet.classList.remove('show');
@@ -1070,6 +1160,7 @@ settingsOverlay.onclick = ()=>{
 };
 
 document.getElementById('switchNotif').onclick = async ()=>{
+  unlockAudio();
   if(!settings.notifications){
     if('Notification' in window){
       const perm = await Notification.requestPermission();
@@ -1190,28 +1281,57 @@ function showToast(msg){
 }
 
 /* ---------------- Notifications / reminders ---------------- */
-function beep(){
+let sharedAudioCtx = null;
+function unlockAudio(){
   try{
-    const ctx = new (window.AudioContext||window.webkitAudioContext)();
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.connect(g); g.connect(ctx.destination);
-    o.type = 'sine'; o.frequency.value = 880;
-    g.gain.setValueAtTime(0.001, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime+0.02);
-    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.5);
-    o.start(); o.stop(ctx.currentTime+0.55);
-    setTimeout(()=>{
-      const o2 = ctx.createOscillator(); const g2 = ctx.createGain();
-      o2.connect(g2); g2.connect(ctx.destination);
-      o2.type='sine'; o2.frequency.value = 1160;
-      g2.gain.setValueAtTime(0.001, ctx.currentTime);
-      g2.gain.exponentialRampToValueAtTime(0.22, ctx.currentTime+0.02);
-      g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.4);
-      o2.start(); o2.stop(ctx.currentTime+0.45);
-    }, 180);
+    if(!sharedAudioCtx) sharedAudioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    if(sharedAudioCtx.state === 'suspended') sharedAudioCtx.resume();
   }catch(e){}
 }
+
+function beep(){
+  try{
+    if(!sharedAudioCtx) sharedAudioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    if(sharedAudioCtx.state === 'suspended') sharedAudioCtx.resume();
+    const ctx = sharedAudioCtx;
+    const now = ctx.currentTime;
+    [ [880, 0], [1180, 0.22], [880, 0.44] ].forEach(([freq, delay])=>{
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'square'; o.frequency.value = freq;
+      const t0 = now + delay;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.5, t0+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0+0.2);
+      o.start(t0); o.stop(t0+0.22);
+    });
+  }catch(e){}
+}
+
+/* ---------------- Alarme plein écran, persistante ---------------- */
+let alarmInterval = null;
+function showAlarm(task){
+  const cat = catById(task.categoryId);
+  document.getElementById('alarmTime').textContent = task.time || '';
+  document.getElementById('alarmTitleText').textContent = task.title;
+  document.getElementById('alarmCatText').textContent = cat.name;
+  document.getElementById('alarmOverlay').classList.add('show');
+
+  const ring = ()=>{
+    beep();
+    if(navigator.vibrate) navigator.vibrate([300,150,300,150,300]);
+  };
+  ring();
+  clearInterval(alarmInterval);
+  alarmInterval = setInterval(ring, 2200);
+}
+function stopAlarm(){
+  clearInterval(alarmInterval);
+  alarmInterval = null;
+  document.getElementById('alarmOverlay').classList.remove('show');
+}
+document.getElementById('btnStopAlarm').onclick = stopAlarm;
 
 function checkReminders(){
   if(!settings.notifications) return;
@@ -1238,8 +1358,7 @@ function checkReminders(){
 }
 
 function fireNotification(task, dateStr){
-  beep();
-  if(navigator.vibrate) navigator.vibrate([200,100,200]);
+  showAlarm(task);
   const cat = catById(task.categoryId);
   const body = task.time + ' — ' + (task.description || cat.name);
   if('Notification' in window && Notification.permission === 'granted'){
@@ -1248,7 +1367,6 @@ function fireNotification(task, dateStr){
       n.onclick = ()=>{ window.focus(); };
     }catch(e){}
   }
-  showToast('⏰ ' + task.title);
 }
 
 setInterval(checkReminders, 20000);
@@ -1348,7 +1466,14 @@ document.getElementById('btnDeleteNote').onclick = ()=>{
   showToast('Note supprimée');
 };
 
+/* Débloque le son dès le tout premier geste dans l'app (règle des navigateurs mobiles) */
+document.addEventListener('pointerdown', function unlockOnce(){
+  unlockAudio();
+  document.removeEventListener('pointerdown', unlockOnce);
+}, { once:true });
+
 /* ---------------- Init ---------------- */
+applyDarkMode();
 renderHeader();
 renderCatFilters();
 renderView();
