@@ -58,9 +58,16 @@
     margin-bottom: 12px;
   }
   .head-title{
-    font-size: 22px; font-weight: 700; letter-spacing: -0.01em;
+    font-size: 24px; font-weight: 800; letter-spacing: -0.02em;
   }
   .head-sub{ font-size: 12.5px; color: var(--ink-dim); margin-top: 1px; }
+  .progress-track{
+    width:120px; height:5px; background: var(--paper-2); border-radius:4px; margin-top:8px; overflow:hidden;
+  }
+  .progress-fill{
+    height:100%; background: linear-gradient(90deg, var(--forest-light), var(--forest));
+    border-radius:4px; width:0%; transition: width .5s var(--ease);
+  }
   .head-actions{ display:flex; gap:8px; }
   .icon-btn{
     width:38px; height:38px; border-radius: 10px;
@@ -316,7 +323,19 @@
   .cat-manage-row:last-child{ border-bottom:none; }
   .cat-manage-row input[type=text]{ flex:1; border:none; background:transparent; font-size:14px; padding:4px 0; }
   .cat-manage-row input[type=text]:focus{ outline:none; }
-  .cat-swatch{ width:20px; height:20px; border-radius:50%; flex-shrink:0; }
+  .cat-swatch{ width:20px; height:20px; border-radius:50%; flex-shrink:0; object-fit:cover; }
+  .cat-icon-upload{
+    position:relative; width:38px; height:38px; border-radius:50%; flex-shrink:0;
+    overflow:hidden; border:1.5px solid var(--line); cursor:pointer;
+  }
+  .cat-icon-upload img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .cat-icon-upload .no-icon{ width:100%; height:100%; }
+  .cat-icon-upload .cam-badge{
+    position:absolute; bottom:-1px; right:-1px; width:16px; height:16px; border-radius:50%;
+    background: var(--forest); display:flex; align-items:center; justify-content:center;
+    border:1.5px solid var(--paper);
+  }
+  .cat-icon-upload .cam-badge svg{ width:9px; height:9px; stroke:#fff; }
   .cat-manage-del{ color: var(--ink-dim); }
   .cat-manage-del svg{ width:16px; height:16px; }
   .add-cat-btn{
@@ -342,6 +361,15 @@
   .switch .knob{ width:20px; height:20px; border-radius:50%; background:#fff; position:absolute; top:3px; left:3px; transition:.2s var(--ease); box-shadow:0 1px 3px rgba(0,0,0,0.3); }
   .switch.on .knob{ left:21px; }
 
+  .note-card{
+    background: var(--white); border-radius:12px; padding:13px 14px;
+    border:1px solid var(--line); transition:.15s var(--ease);
+  }
+  .note-card:active{ transform: scale(0.98); }
+  .note-card .n-title{ font-size:14.5px; font-weight:700; color: var(--ink); margin-bottom:3px; }
+  .note-card .n-preview{ font-size:12.5px; color: var(--ink-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .note-card .n-date{ font-size:10.5px; color: var(--forest-light); margin-top:5px; font-weight:600; }
+
   @media (prefers-reduced-motion: reduce){
     *{ animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
   }
@@ -354,6 +382,9 @@
     <div>
       <div class="head-title" id="headTitle">Journal</div>
       <div class="head-sub" id="headSub">—</div>
+      <div class="progress-track" id="progressTrack" style="display:none;">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
     </div>
     <div class="head-actions">
       <button class="icon-btn" id="btnSearch" aria-label="Rechercher">
@@ -361,6 +392,9 @@
       </button>
       <button class="icon-btn" id="btnFilter" aria-label="Filtrer">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="4 4 20 4 14 12.5 14 19 10 21 10 12.5 4 4"/></svg>
+      </button>
+      <button class="icon-btn" id="btnNotes" aria-label="Notes">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
       </button>
       <button class="icon-btn" id="btnSettings" aria-label="Réglages">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -500,6 +534,40 @@
   </div>
 </div>
 
+<!-- Sheet: Notes list -->
+<div class="sheet-overlay" id="notesOverlay"></div>
+<div class="sheet" id="notesSheet">
+  <div class="sheet-handle"></div>
+  <h3>Notes</h3>
+  <div id="notesList" style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;"></div>
+  <div class="sheet-actions">
+    <button class="btn btn-primary" id="btnAddNote">+ Nouvelle note</button>
+  </div>
+  <div class="sheet-actions" style="margin-top:8px;">
+    <button class="btn btn-ghost" id="btnCloseNotes">Fermer</button>
+  </div>
+</div>
+
+<!-- Sheet: Note editor -->
+<div class="sheet-overlay" id="noteEditOverlay"></div>
+<div class="sheet" id="noteEditSheet">
+  <div class="sheet-handle"></div>
+  <h3 id="noteEditTitle">Nouvelle note</h3>
+  <div class="field">
+    <label>Titre</label>
+    <input type="text" id="nTitle" placeholder="Ex. Idées cadeaux, liste courses...">
+  </div>
+  <div class="field">
+    <label>Contenu</label>
+    <textarea id="nContent" placeholder="Écris ce que tu veux ici..." style="min-height:160px;"></textarea>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn btn-ghost" id="btnCancelNote">Annuler</button>
+    <button class="btn btn-primary" id="btnSaveNote">Enregistrer</button>
+  </div>
+  <div class="btn-danger-text" id="btnDeleteNote" style="display:none;">Supprimer cette note</div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -604,6 +672,18 @@ function renderHeader(){
   const now = new Date();
   document.getElementById('headSub').textContent =
     DOW_FULL[now.getDay()].charAt(0).toUpperCase()+DOW_FULL[now.getDay()].slice(1) + ' ' + now.getDate() + ' ' + MONTH_LABELS[now.getMonth()];
+
+  const dateStr = todayStr();
+  const todayTasks = tasksForDate(dateStr);
+  const track = document.getElementById('progressTrack');
+  const fill = document.getElementById('progressFill');
+  if(todayTasks.length === 0){
+    track.style.display = 'none';
+  } else {
+    const done = todayTasks.filter(t=> isDoneOn(t, dateStr)).length;
+    track.style.display = 'block';
+    fill.style.width = Math.round((done/todayTasks.length)*100) + '%';
+  }
 }
 
 /* ---------------- Rendering: today strip ---------------- */
@@ -651,13 +731,21 @@ function renderStrip(){
 }
 
 /* ---------------- Rendering: category filters ---------------- */
+function catDotHtml(c, size){
+  size = size || 8;
+  if(c.icon){
+    return `<span class="dot" style="width:${size}px;height:${size}px;background-image:url(${c.icon});background-size:cover;background-position:center;"></span>`;
+  }
+  return `<span class="dot" style="width:${size}px;height:${size}px;background:${c.color}"></span>`;
+}
+
 function renderCatFilters(){
   const wrap = document.getElementById('catFilters');
   wrap.innerHTML = '';
   categories.forEach(c=>{
     const chip = document.createElement('button');
     chip.className = 'cat-chip' + (selectedFilterCats.has(c.id) ? ' active':'');
-    chip.innerHTML = `<span class="dot" style="background:${c.color}"></span>${c.name}`;
+    chip.innerHTML = `${catDotHtml(c,14)}${c.name}`;
     chip.onclick = ()=>{
       if(selectedFilterCats.has(c.id)) selectedFilterCats.delete(c.id);
       else selectedFilterCats.add(c.id);
@@ -798,7 +886,7 @@ function taskCard(t, dateStr, done, overdue, idx){
       </div>
       <div class="task-title">${escapeHtml(t.title)}</div>
       ${t.description ? `<div class="task-desc">${escapeHtml(t.description)}</div>` : ''}
-      <div class="task-cat"><span class="dot" style="background:${cat.color}"></span>${escapeHtml(cat.name)}</div>
+      <div class="task-cat">${catDotHtml(cat,11)}${escapeHtml(cat.name)}</div>
     </div>
     <button class="task-del"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
   `;
@@ -806,6 +894,7 @@ function taskCard(t, dateStr, done, overdue, idx){
     e.stopPropagation();
     toggleDone(t.id, dateStr);
     renderView();
+    renderHeader();
     if(!done) showToast('Tâche terminée ✓');
   };
   card.querySelector('.task-del').onclick = (e)=>{
@@ -866,7 +955,8 @@ function renderCatRow(){
     const dot = document.createElement('button');
     dot.type='button';
     dot.className = 'color-dot';
-    dot.style.background = c.color;
+    dot.style.background = c.icon ? '#fff' : c.color;
+    if(c.icon){ dot.style.backgroundImage = `url(${c.icon})`; dot.style.backgroundSize='cover'; dot.style.backgroundPosition='center'; }
     dot.title = c.name;
     dot.dataset.catId = c.id;
     dot.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
@@ -994,23 +1084,55 @@ document.getElementById('switchNotif').onclick = async ()=>{
   showToast(settings.notifications ? 'Rappels activés' : 'Rappels désactivés');
 };
 
+function compressImageFile(file, callback){
+  const reader = new FileReader();
+  reader.onload = (evt)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const size = 160;
+      const canvas = document.createElement('canvas');
+      canvas.width = size; canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      const scale = Math.max(size/img.width, size/img.height);
+      const w = img.width*scale, h = img.height*scale;
+      ctx.drawImage(img, (size-w)/2, (size-h)/2, w, h);
+      callback(canvas.toDataURL('image/jpeg', 0.85));
+    };
+    img.src = evt.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
 function renderCatManageList(){
   const list = document.getElementById('catManageList');
   list.innerHTML = '';
   categories.forEach(c=>{
     const row = document.createElement('div');
     row.className = 'cat-manage-row';
+    const iconInner = c.icon
+      ? `<img src="${c.icon}" alt="">`
+      : `<span class="no-icon" style="background:${c.color}"></span>`;
     row.innerHTML = `
-      <span class="cat-swatch" style="background:${c.color}"></span>
-      <input type="text" value="${escapeHtml(c.name)}">
+      <div class="cat-icon-upload" title="Changer l'icône">
+        ${iconInner}
+        <span class="cam-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
+        <input type="file" accept="image/*" style="display:none;">
+      </div>
+      <input type="text" value="${escapeHtml(c.name)}" class="cat-name-input">
       <button class="cat-manage-del"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     `;
-    row.querySelector('input').oninput = (e)=>{ c.name = e.target.value; saveCategories(); renderView(); };
-    row.querySelector('.cat-swatch').onclick = ()=>{
-      const colors = ['#33533A','#C77D34','#5B7DA6','#B5493A','#8B5FA3','#4A8C7C','#C9A227','#7A6F5D'];
-      const idx = colors.indexOf(c.color);
-      c.color = colors[(idx+1)%colors.length];
-      saveCategories(); renderCatManageList(); renderView();
+    row.querySelector('.cat-name-input').oninput = (e)=>{ c.name = e.target.value; saveCategories(); renderView(); };
+    const uploadWrap = row.querySelector('.cat-icon-upload');
+    const fileInput = row.querySelector('input[type=file]');
+    uploadWrap.onclick = ()=> fileInput.click();
+    fileInput.onchange = (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      compressImageFile(file, (dataUrl)=>{
+        c.icon = dataUrl;
+        saveCategories(); renderCatManageList(); renderCatFilters(); renderView();
+        showToast('Icône mise à jour ✓');
+      });
     };
     row.querySelector('.cat-manage-del').onclick = ()=>{
       if(categories.length<=1){ showToast('Gardez au moins une catégorie'); return; }
@@ -1029,7 +1151,7 @@ document.getElementById('btnAddCat').onclick = ()=>{
 
 /* ---------------- Export / Import ---------------- */
 document.getElementById('btnExport').onclick = ()=>{
-  const data = { tasks, categories, exportedAt: new Date().toISOString() };
+  const data = { tasks, categories, notes, exportedAt: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1048,7 +1170,8 @@ document.getElementById('fileImport').onchange = (e)=>{
       const data = JSON.parse(ev.target.result);
       if(data.tasks) tasks = data.tasks;
       if(data.categories) categories = data.categories;
-      saveTasks(); saveCategories();
+      if(data.notes) notes = data.notes;
+      saveTasks(); saveCategories(); saveNotes();
       renderCatFilters(); renderCatManageList(); renderView();
       showToast('Sauvegarde restaurée ✓');
     }catch(err){ showToast('Fichier invalide'); }
@@ -1136,6 +1259,94 @@ if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(()=>{});
   });
 }
+
+/* ---------------- Notes ---------------- */
+const NOTES_KEY = 'journal_notes_v1';
+let notes = load(NOTES_KEY, []);
+let editingNoteId = null;
+function saveNotes(){ save(NOTES_KEY, notes); }
+
+const notesOverlay = document.getElementById('notesOverlay');
+const notesSheet = document.getElementById('notesSheet');
+const noteEditOverlay = document.getElementById('noteEditOverlay');
+const noteEditSheet = document.getElementById('noteEditSheet');
+
+document.getElementById('btnNotes').onclick = ()=>{
+  renderNotesList();
+  notesOverlay.classList.add('show');
+  notesSheet.classList.add('show');
+};
+document.getElementById('btnCloseNotes').onclick = ()=>{
+  notesOverlay.classList.remove('show');
+  notesSheet.classList.remove('show');
+};
+notesOverlay.onclick = ()=>{
+  notesOverlay.classList.remove('show');
+  notesSheet.classList.remove('show');
+};
+
+function renderNotesList(){
+  const list = document.getElementById('notesList');
+  list.innerHTML = '';
+  if(notes.length === 0){
+    list.innerHTML = '<div style="text-align:center; color:var(--ink-dim); font-size:13.5px; padding:20px 0;">Aucune note pour l’instant.</div>';
+    return;
+  }
+  const sorted = [...notes].sort((a,b)=> b.updatedAt - a.updatedAt);
+  sorted.forEach(n=>{
+    const card = document.createElement('div');
+    card.className = 'note-card';
+    const d = new Date(n.updatedAt);
+    card.innerHTML = `
+      <div class="n-title">${escapeHtml(n.title || 'Sans titre')}</div>
+      <div class="n-preview">${escapeHtml((n.content||'').slice(0,80))}</div>
+      <div class="n-date">${pad2(d.getDate())}/${pad2(d.getMonth()+1)} à ${pad2(d.getHours())}:${pad2(d.getMinutes())}</div>
+    `;
+    card.onclick = ()=> openNoteEdit(n);
+    list.appendChild(card);
+  });
+}
+
+function openNoteEdit(note){
+  editingNoteId = note ? note.id : null;
+  document.getElementById('noteEditTitle').textContent = note ? 'Modifier la note' : 'Nouvelle note';
+  document.getElementById('nTitle').value = note ? note.title : '';
+  document.getElementById('nContent').value = note ? note.content : '';
+  document.getElementById('btnDeleteNote').style.display = note ? 'block' : 'none';
+  noteEditOverlay.classList.add('show');
+  noteEditSheet.classList.add('show');
+}
+function closeNoteEdit(){
+  noteEditOverlay.classList.remove('show');
+  noteEditSheet.classList.remove('show');
+}
+document.getElementById('btnAddNote').onclick = ()=> openNoteEdit(null);
+document.getElementById('btnCancelNote').onclick = closeNoteEdit;
+noteEditOverlay.onclick = closeNoteEdit;
+
+document.getElementById('btnSaveNote').onclick = ()=>{
+  const title = document.getElementById('nTitle').value.trim();
+  const content = document.getElementById('nContent').value.trim();
+  if(!title && !content){ showToast('Note vide, rien à enregistrer'); return; }
+  if(editingNoteId){
+    const n = notes.find(x=>x.id===editingNoteId);
+    n.title = title; n.content = content; n.updatedAt = Date.now();
+  } else {
+    notes.push({ id: uid(), title, content, updatedAt: Date.now() });
+  }
+  saveNotes();
+  closeNoteEdit();
+  renderNotesList();
+  showToast('Note enregistrée ✓');
+};
+document.getElementById('btnDeleteNote').onclick = ()=>{
+  if(!editingNoteId) return;
+  notes = notes.filter(n=>n.id!==editingNoteId);
+  saveNotes();
+  closeNoteEdit();
+  renderNotesList();
+  showToast('Note supprimée');
+};
 
 /* ---------------- Init ---------------- */
 renderHeader();
